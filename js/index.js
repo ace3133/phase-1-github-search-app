@@ -1,81 +1,51 @@
-document.addEventListener('DOMContentLoaded', function () {
-    const form = document.getElementById('github-form');
-    const searchInput = document.getElementById('search');
-    const userList = document.getElementById('user-list');
-    const reposList = document.getElementById('repos-list');
-    const toggleSearchBtn = document.getElementById('toggle-search');
-    let isSearchingUsers = true; // Flag to track search type
-  
-    form.addEventListener('submit', function (event) {
-      event.preventDefault();
-      const searchTerm = searchInput.value.trim();
-      if (searchTerm !== '') {
-        if (isSearchingUsers) {
-          searchUsers(searchTerm);
-        } else {
-          searchRepos(searchTerm);
-        }
-      }
-    });
-  
-    toggleSearchBtn.addEventListener('click', function () {
-      isSearchingUsers = !isSearchingUsers;
-      if (isSearchingUsers) {
-        toggleSearchBtn.textContent = 'Toggle Search Type: Users';
-      } else {
-        toggleSearchBtn.textContent = 'Toggle Search Type: Repositories';
-      }
-    });
-  
-    function searchUsers(searchTerm) {
-      const url = `https://api.github.com/search/users?q=${searchTerm}`;
-      fetch(url, {
-        headers: {
-          'Accept': 'application/vnd.github.v3+json'
-        }
-      })
-        .then(response => response.json())
-        .then(data => {
-          displayUsers(data.items);
+const form = document.getElementById("github-form");
+const container = document.getElementById("github-container")
+const userList = document.getElementById("user-list");
+const repoList = document.getElementById("repos-list");
+const text = document.getElementById("search");
+const button = document.getElementById("button");
+
+form.addEventListener("submit", (e) => {
+    e.preventDefault();
+    fetch("https://api.github.com/search/users?q=octocat")
+        .then(res => res.json())
+        .then(users => {
+            Object.values(users.items).forEach(user => {
+                if (text.value.toLowerCase() === user.login.toLowerCase()) {
+                    createUserList(user);
+                    toggleSearch(user)
+                    text.disabled = true
+                }
+                else if (text.value === '') {
+                    location.reload()
+                }
+
+            })
         })
-        .catch(error => console.error('Error fetching users:', error));
-    }
-  
-    function searchRepos(searchTerm) {
-      const url = `https://api.github.com/search/repositories?q=${searchTerm}`;
-      fetch(url, {
-        headers: {
-          'Accept': 'application/vnd.github.v3+json'
-        }
-      })
-        .then(response => response.json())
-        .then(data => {
-          displayRepos(data.items);
-        })
-        .catch(error => console.error('Error fetching repositories:', error));
-    }
-  
-    function displayUsers(users) {
-      userList.innerHTML = '';
-      users.forEach(user => {
-        const listItem = document.createElement('li');
-        listItem.innerHTML = `
-          <img src="${user.avatar_url}" alt="${user.login}" width="50" height="50">
-          <a href="${user.html_url}" target="_blank">${user.login}</a>
-        `;
-        userList.appendChild(listItem);
-      });
-    }
-  
-    function displayRepos(repos) {
-      reposList.innerHTML = '';
-      repos.forEach(repo => {
-        const listItem = document.createElement('li');
-        listItem.innerHTML = `
-          <a href="${repo.html_url}" target="_blank">${repo.full_name}</a>
-        `;
-        reposList.appendChild(listItem);
-      });
-    }
-  });
-  
+
+})
+function createUserList(user) {
+    let userli = document.createElement("li");
+    userList.appendChild(userli);
+    userli.innerHTML = `<p>${user.login}</p><a href="${user.html_url}" target="_blank">${user.html_url}</a><img src="${user.avatar_url}" style="width: 80px; height: 80px; margin-left: 10px; vertical-align: middle;" />
+`;
+    userli.classList.add("li")
+    container.appendChild(userList)
+}
+function toggleSearch(user) {
+    button.addEventListener("click", () => {
+        fetch(`https://api.github.com/users/${user.login}/repos`)
+            .then(res => res.json())
+            .then(repos => {
+                Object.values(repos).forEach((repo) => {
+                    let repoLi = document.createElement("li");
+                    repoList.appendChild(repoLi)
+                    repoLi.innerHTML = `<a href="${repo.html_url}" target="_blank">${repo.html_url}</a>`
+                    button.disabled = true
+                    text.value = ''
+                })
+
+            })
+    })
+}
+
