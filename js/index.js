@@ -7,20 +7,24 @@ const button = document.getElementById("button");
 
 form.addEventListener("submit", (e) => {
     e.preventDefault();
+
     fetch("https://api.github.com/search/users?q=octocat")
         .then(res => res.json())
         .then(users => {
-            Object.values(users.items).forEach(user => {
-                if (text.value.toLowerCase() === user.login.toLowerCase()) {
-                    createUserList(user);
-                    toggleSearch(user)
-                    text.disabled = true
-                }
-                else if (text.value === '') {
-                    location.reload()
-                }
+            const filteredUsers = users.items.filter(user => user.login.toLowerCase().includes(text.value.toLowerCase()));
 
-            })
+            if (text.value === '') {
+                location.reload()
+            }
+            else if (filteredUsers.length > 0) {
+                filteredUsers.forEach((user) => {
+                    createUserList(user);
+                    toggleSearch(user);
+                })
+                text.disabled = true;
+            }
+
+
         })
 
 })
@@ -48,4 +52,3 @@ function toggleSearch(user) {
             })
     })
 }
-
